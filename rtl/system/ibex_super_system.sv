@@ -1,6 +1,7 @@
 module ibex_super_system #(
   parameter int GpoWidth = 16,
-  parameter     SRAMInitFile = ""
+  parameter     SRAMInitFile = "",
+  parameter     IbexConfig = ""
 ) (
   input logic                 clk_sys_i,
   input logic                 rst_sys_ni,
@@ -45,6 +46,57 @@ module ibex_super_system #(
     Timer,
     DbgDev
   } bus_device_e;
+
+  typedef struct {
+    bit PMPEnable;
+    int unsigned PMPGranularity;
+    int unsigned PMPNumRegions;
+    bit RV32E;
+    ibex_pkg::rv32m_e RV32M;
+    ibex_pkg::rv32b_e RV32B;
+    bit BranchTargetALU;
+    bit WritebackStage;
+    bit ICache;
+    bit ICacheECC;
+    bit BranchPredictor;
+    bit SecureIbex;
+    bit ICacheScramble;
+  } ibex_config_t;
+
+  // Configurations taken from ibex_configs.yaml in vendor code.
+  localparam ibex_config_t small_ibex_config = '{
+                                   PMPEnable:       1'b0,
+                                   PMPGranularity:  0,
+                                   PMPNumRegions:   4,
+                                   RV32E:           1'b0,
+                                   RV32M:           ibex_pkg::RV32MFast,
+                                   RV32B:           ibex_pkg::RV32BNone,
+                                   BranchTargetALU: 1'b0,
+                                   WritebackStage:  1'b0,
+                                   ICache:          1'b0,
+                                   ICacheECC:       1'b0,
+                                   BranchPredictor: 1'b0,
+                                   SecureIbex:      1'b0,
+                                   ICacheScramble:  1'b0};
+  localparam ibex_config_t opentitan_ibex_config = '{
+                                   PMPEnable:       1'b1,
+                                   PMPGranularity:  0,
+                                   PMPNumRegions:   16,
+                                   RV32E:           1'b0,
+                                   RV32M:           ibex_pkg::RV32MSingleCycle,
+                                   RV32B:           ibex_pkg::RV32BOTEarlGrey,
+                                   BranchTargetALU: 1'b1,
+                                   WritebackStage:  1'b1,
+                                   ICache:          1'b1,
+                                   ICacheECC:       1'b1,
+                                   BranchPredictor: 1'b0,
+                                   SecureIbex:      1'b1,
+                                   ICacheScramble:  1'b0};
+
+  if (IbexConfig != "small" && IbexConfig != "opentitan")
+    $error("Invalid IbexConfig %s", IbexConfig);
+  localparam ibex_config_t ibex_config = (IbexConfig == "small") ?
+    small_ibex_config : opentitan_ibex_config;
 
   localparam int NrDevices = DBG ? 5 : 4;
   localparam int NrHosts = DBG ? 2 : 1;
@@ -177,6 +229,19 @@ module ibex_super_system #(
   assign rst_core_n = rst_sys_ni & ~ndmreset_req;
 
   ibex_top #(
+     .PMPEnable(ibex_config.PMPEnable),
+     .PMPGranularity(ibex_config.PMPGranularity),
+     .PMPNumRegions(ibex_config.PMPNumRegions),
+     .RV32E(ibex_config.RV32E),
+     .RV32M(ibex_config.RV32M),
+     .RV32B(ibex_config.RV32B),
+     .BranchTargetALU(ibex_config.BranchTargetALU),
+     .WritebackStage(ibex_config.WritebackStage),
+     .ICache(ibex_config.ICache),
+     .ICacheECC(ibex_config.ICacheECC),
+     .BranchPredictor(ibex_config.BranchPredictor),
+     .SecureIbex(ibex_config.SecureIbex),
+     .ICacheScramble(ibex_config.ICacheScramble),
      .RegFile(ibex_pkg::RegFileFPGA),
      .DbgTriggerEn(DbgTriggerEn),
      .DbgHwBreakNum(DbgHwBreakNum),

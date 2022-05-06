@@ -10,13 +10,15 @@ module top_artya7 (
     output              UART_TX
 );
   parameter              SRAMInitFile = "";
+  parameter              IbexConfig = "";
 
   logic clk_sys, rst_sys_n;
 
 
   ibex_super_system #(
     .GpoWidth(16),
-    .SRAMInitFile(SRAMInitFile)
+    .SRAMInitFile(SRAMInitFile),
+    .IbexConfig(IbexConfig)
   ) u_ibex_super_system (
     .clk_sys_i(clk_sys),
     .rst_sys_ni(rst_sys_n),

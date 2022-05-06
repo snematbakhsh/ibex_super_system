@@ -31,6 +31,13 @@ parameters:
     default: "../../../../../sw/build/blank/blank.vmem"
     paramtype: vlogparam
 
+  # Supported configurations are "small" and "opentitan"
+  IbexConfig:
+    datatype: str
+    description: Ibex core configuration
+    default: "small"
+    paramtype: vlogparam
+
   # For value definition, please see ip/prim/rtl/prim_pkg.sv
   PRIM_DEFAULT_IMPL:
     datatype: str
@@ -46,6 +53,7 @@ targets:
     toplevel: top_artya7
     parameters:
       - SRAMInitFile
+      - IbexConfig
       - PRIM_DEFAULT_IMPL=prim_pkg::ImplXilinx
     tools:
       vivado:
